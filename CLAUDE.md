@@ -115,11 +115,13 @@ The project is configured as a bash project in Serena (`.serena/project.yml`) wi
 - `specs/{feature}/` - Feature specifications and design documents
 
 ### Files to Exclude from Git
-**Never commit these files**:
+**These files are automatically excluded by .gitignore**:
 - `bin/` - Binary files (generated artifacts, can be rebuilt)
 - `.claude/` - Claude Code personal settings
 - `.serena/` - Serena MCP personal settings
 - `.specify/` - Specify framework personal configuration
+- OS generated files (`.DS_Store`, `Thumbs.db`, etc.)
+- Log files (`*.log`)
 
 ### Security Checks Before Commit
 **Always run these checks before git add**:
@@ -135,8 +137,7 @@ grep -r "localhost" src/ tests/
 - [ ] Source code included (`src/`)
 - [ ] Tests included (`tests/`)
 - [ ] Documentation updated (`CLAUDE.md`, `specs/`)
-- [ ] No binary files (`bin/` excluded)
-- [ ] No personal settings (`.claude/`, `.serena/`, `.specify/` excluded)
+- [ ] .gitignore properly excludes build artifacts and personal settings
 - [ ] Security scan completed (no passwords/keys found)
 - [ ] Localhost usage verified (tests only)
 
