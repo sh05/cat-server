@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"net/http"
 	"os"
@@ -9,17 +10,32 @@ import (
 	"time"
 
 	"github.com/sh05/cat-server/src/server"
+	"github.com/sh05/cat-server/src/services"
 )
 
 func main() {
+	// Parse command line flags
+	dirFlag := flag.String("dir", "./files/", "Directory to list files from")
+	flag.Parse()
+
 	// Setup structured logging
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
 	slog.SetDefault(logger)
 
-	// Create server
-	srv := server.New(":8080")
+	// Create directory service
+	directoryService, err := services.NewDirectoryService(*dirFlag)
+	if err != nil {
+		slog.Error("failed to create directory service", "error", err, "directory", *dirFlag)
+		os.Exit(1)
+	}
+
+	// Log startup configuration
+	slog.Info("starting cat-server", "directory", *dirFlag)
+
+	// Create server with directory service
+	srv := server.New(":8080", directoryService)
 
 	// Setup graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

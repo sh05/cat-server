@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: cat-server File List API
+  description: API for retrieving file lists from specified directories
+  version: 1.0.0
+  contact:
+    name: cat-server development team
+    url: https://github.com/sh05/cat-server
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+paths:
+  /ls:
+    get:
+      summary: Get file list from directory
+      description: |
+        Retrieves a list of all files (including hidden files starting with dot)
+        from the directory specified during server startup with the -dir flag.
+        Default directory is ./files/ if no -dir argument is provided.
+      operationId: getFileList
+      tags:
+        - files
+      responses:
+        '200':
+          description: Successfully retrieved file list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileListResponse'
+              examples:
+                with_files:
+                  summary: Directory with files
+                  value:
+                    files: ["README.md", ".gitignore", "main.go", ".hidden"]
+                    directory: "./files/"
+                    count: 4
+                    generated_at: "2025-09-20T10:00:00Z"
+                empty_directory:
+                  summary: Empty directory
+                  value:
+                    files: []
+                    directory: "./files/"
+                    count: 0
+                    generated_at: "2025-09-20T10:00:00Z"
+        '400':
+          description: Bad request - Invalid directory or path
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                directory_not_found:
+                  summary: Directory does not exist
+                  value:
+                    error: "directory not found"
+                    path: "/nonexistent/path"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 400
+                invalid_path:
+                  summary: Invalid directory path
+                  value:
+                    error: "invalid directory path"
+                    path: "invalid\x00path"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 400
+        '403':
+          description: Forbidden - No read permission for directory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_permission:
+                  summary: No read permission
+                  value:
+                    error: "permission denied"
+                    path: "/restricted/directory"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 403
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                system_error:
+                  summary: System error during file listing
+                  value:
+                    error: "internal server error"
+                    path: "./files/"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 500
+
+components:
+  schemas:
+    FileListResponse:
+      type: object
+      required:
+        - files
+        - directory
+        - count
+        - generated_at
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            maxLength: 255
+          description: Array of file names in the directory (including hidden files)
+          example: ["README.md", ".gitignore", "main.go"]
+          maxItems: 10000
+        directory:
+          type: string
+          description: The directory path that was scanned
+          example: "./files/"
+          maxLength: 4096
+        count:
+          type: integer
+          description: Number of files found (must match files array length)
+          minimum: 0
+          maximum: 10000
+          example: 3
+        generated_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the file list was generated
+          example: "2025-09-20T10:00:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - timestamp
+        - status_code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "directory not found"
+          maxLength: 1000
+        path:
+          type: string
+          description: The directory path that caused the error (if applicable)
+          example: "/invalid/path"
+          maxLength: 4096
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the error occurred
+          example: "2025-09-20T10:00:00Z"
+        status_code:
+          type: integer
+          description: HTTP status code
+          enum: [400, 403, 500]
+          example: 400
+
+  examples:
+    SuccessfulFileList:
+      summary: Successful file listing
+      value:
+        files: ["README.md", ".gitignore", "main.go", ".env"]
+        directory: "./files/"
+        count: 4
+        generated_at: "2025-09-20T10:00:00Z"
+
+    EmptyDirectory:
+      summary: Empty directory response
+      value:
+        files: []
+        directory: "./empty/"
+        count: 0
+        generated_at: "2025-09-20T10:00:00Z"
+
+    DirectoryNotFoundError:
+      summary: Directory not found error
+      value:
+        error: "directory not found"
+        path: "/nonexistent"
+        timestamp: "2025-09-20T10:00:00Z"
+        status_code: 400
+
+tags:
+  - name: files
+    description: File system operations

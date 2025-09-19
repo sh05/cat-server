@@ -10,11 +10,18 @@ import (
 
 	"github.com/sh05/cat-server/src/handlers"
 	"github.com/sh05/cat-server/src/server"
+	"github.com/sh05/cat-server/src/services"
 )
 
 func TestHealthEndpointLoadTest(t *testing.T) {
+	// Create directory service for test
+	dummyService, err := services.NewDirectoryService("./files/")
+	if err != nil {
+		t.Fatalf("Failed to create directory service: %v", err)
+	}
+
 	// Start test server
-	srv := server.New(":8084")
+	srv := server.New(":8084", dummyService)
 
 	go func() {
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
@@ -168,8 +175,14 @@ func TestHealthEndpointLoadTest(t *testing.T) {
 }
 
 func TestMemoryUsageUnderLoad(t *testing.T) {
+	// Create directory service for test
+	dummyService, err := services.NewDirectoryService("./files/")
+	if err != nil {
+		t.Fatalf("Failed to create directory service: %v", err)
+	}
+
 	// Start test server
-	srv := server.New(":8085")
+	srv := server.New(":8085", dummyService)
 
 	go func() {
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {

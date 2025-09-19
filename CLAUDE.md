@@ -27,24 +27,47 @@ go test -cover               # Run tests with coverage report
 ```
 
 ### REST API Development Commands
-For the current health endpoint implementation:
+For the current health endpoint and file list endpoint implementation:
 ```bash
-go run src/main.go            # Start the HTTP server on :8080
-curl http://localhost:8080/health  # Test health endpoint (JSON)
+# Server startup commands
+go run src/main.go                      # Start server with default directory (./files/)
+go run src/main.go -dir ./custom-dir    # Start server with custom directory
+
+# Health endpoint testing
+curl http://localhost:8080/health       # Test health endpoint (JSON)
 curl -H "Accept: text/html" http://localhost:8080/health  # Test HTML response
 curl -H "Accept: text/plain" http://localhost:8080/health # Test text response
-go test ./tests/unit/... -v   # Run unit tests
-go test ./tests/integration/... -v  # Run integration tests
-go test ./tests/contract/... -v     # Run OpenAPI contract tests
-go test ./tests/performance/... -v  # Run load tests
+
+# File list endpoint testing (/ls)
+curl http://localhost:8080/ls         # Get file list from configured directory
+curl -s http://localhost:8080/ls | jq .  # Pretty print JSON response
+curl -w "%{time_total}\n" -s http://localhost:8080/ls >/dev/null  # Measure response time
+
+# Testing with different directories
+mkdir -p ./test-files && echo "test" > ./test-files/sample.txt
+go run src/main.go -dir ./test-files     # Test with custom directory
+
+# Error case testing
+curl -X POST http://localhost:8080/ls # Test method not allowed (should return 405)
+
+# Development testing commands
+go test ./tests/unit/... -v             # Run unit tests
+go test ./tests/integration/... -v      # Run integration tests
+go test ./tests/contract/... -v         # Run OpenAPI contract tests
+go test ./tests/performance/... -v      # Run load tests
+go test ./specs/004-list-get-request/contracts/ -v  # Run feature contract tests
+
+# Build commands
 go build -o bin/cat-server src/main.go  # Build production binary
+./bin/cat-server -dir ./files           # Run production binary
 ```
 
 ### Project Structure (Current Implementation)
 ```
 src/
 ├── server/          # HTTP server implementation
-├── handlers/        # HTTP request handlers
+├── handlers/        # HTTP request handlers (health.go, list.go)
+├── services/        # Business logic services (directory.go)
 └── main.go         # Application entry point
 
 tests/
@@ -52,6 +75,15 @@ tests/
 ├── integration/    # Integration tests for full workflows
 ├── contract/       # OpenAPI specification compliance tests
 └── performance/    # Load and performance tests
+
+specs/              # Feature specifications (Specify framework)
+├── 004-list-get-request/
+│   ├── spec.md         # Feature specification
+│   ├── plan.md         # Implementation plan
+│   ├── research.md     # Technical research
+│   ├── data-model.md   # Data models and entities
+│   ├── quickstart.md   # Demo and testing guide
+│   └── contracts/      # OpenAPI specs and contract tests
 
 bin/                # Compiled binaries
 ```

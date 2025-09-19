@@ -9,11 +9,18 @@ import (
 
 	"github.com/sh05/cat-server/src/handlers"
 	"github.com/sh05/cat-server/src/server"
+	"github.com/sh05/cat-server/src/services"
 )
 
 func TestHealthEndpointIntegration(t *testing.T) {
+	// Create a dummy directory service for health endpoint test
+	dummyService, err := services.NewDirectoryService("./files/")
+	if err != nil {
+		t.Fatalf("Failed to create directory service: %v", err)
+	}
+
 	// Start test server on fixed test port
-	srv := server.New(":8081")
+	srv := server.New(":8081", dummyService)
 
 	// Start server in goroutine
 	go func() {
@@ -60,7 +67,11 @@ func TestHealthEndpointIntegration(t *testing.T) {
 }
 
 func TestServerGracefulShutdown(t *testing.T) {
-	srv := server.New(":8082")
+	dummyService, err := services.NewDirectoryService("./files/")
+	if err != nil {
+		t.Fatalf("Failed to create directory service: %v", err)
+	}
+	srv := server.New(":8082", dummyService)
 
 	// Start server
 	go func() {
@@ -77,7 +88,7 @@ func TestServerGracefulShutdown(t *testing.T) {
 	defer cancel()
 
 	start := time.Now()
-	err := srv.Shutdown(ctx)
+	err = srv.Shutdown(ctx)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -92,7 +103,11 @@ func TestServerGracefulShutdown(t *testing.T) {
 }
 
 func TestConcurrentHealthRequests(t *testing.T) {
-	srv := server.New(":8083")
+	dummyService, err := services.NewDirectoryService("./files/")
+	if err != nil {
+		t.Fatalf("Failed to create directory service: %v", err)
+	}
+	srv := server.New(":8083", dummyService)
 
 	go func() {
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
