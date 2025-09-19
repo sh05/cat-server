@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: cat-server Health API
+  description: |
+    REST API server health check endpoint for cat-server.
+    Provides basic server availability verification for monitoring systems.
+  version: 1.0.0
+  contact:
+    name: cat-server development team
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.cat-server.local
+    description: Production server
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: |
+        Returns HTTP 200 status to indicate server is running and responsive.
+        Used by monitoring systems and load balancers to verify service availability.
+
+        This endpoint:
+        - Does not require authentication
+        - Performs basic server availability check only
+        - Does not verify external dependencies
+        - Should respond within 10ms under normal conditions
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Server is healthy and responsive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                json_response:
+                  summary: JSON response format
+                  value:
+                    status: "ok"
+                    timestamp: "2025-09-20T10:15:30Z"
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+              examples:
+                text_response:
+                  summary: Plain text response
+                  value: "OK"
+            text/html:
+              schema:
+                type: string
+                example: "<html><body>OK</body></html>"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server_error:
+                  summary: Server error response
+                  value:
+                    error: "Internal server error"
+                    timestamp: "2025-09-20T10:15:30Z"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      description: Health check response indicating server status
+      properties:
+        status:
+          type: string
+          description: Health status indicator
+          example: "ok"
+          enum:
+            - "ok"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when health check was performed
+          example: "2025-09-20T10:15:30Z"
+      required:
+        - status
+        - timestamp
+      additionalProperties: false
+
+    ErrorResponse:
+      type: object
+      description: Error response format
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Internal server error"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when error occurred
+          example: "2025-09-20T10:15:30Z"
+      required:
+        - error
+        - timestamp
+      additionalProperties: false
+
+tags:
+  - name: Health
+    description: Health check operations
+
+externalDocs:
+  description: cat-server project documentation
+  url: https://github.com/sh05/cat-server
+
+# Extension for contract testing
+x-testing:
+  scenarios:
+    - name: "Basic health check"
+      request:
+        method: GET
+        path: /health
+      expected_response:
+        status: 200
+        headers:
+          content-type:
+            - "application/json"
+            - "text/plain"
+            - "text/html"
+      validation:
+        - response_time_ms: 10
+        - status_code: 200
+
+    - name: "Health check without authentication"
+      request:
+        method: GET
+        path: /health
+        headers: {}
+      expected_response:
+        status: 200
+      validation:
+        - no_auth_required: true
+
+    - name: "Health check concurrent requests"
+      request:
+        method: GET
+        path: /health
+        concurrent: 10
+      expected_response:
+        status: 200
+      validation:
+        - all_requests_succeed: true
+        - max_response_time_ms: 50
