@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sh05/cat-server/src/handlers"
+	"github.com/sh05/cat-server/src/services"
 )
 
 // Server represents the HTTP server
@@ -16,11 +17,14 @@ type Server struct {
 }
 
 // New creates a new server instance
-func New(addr string) *Server {
+func New(addr string, directoryService *services.DirectoryService) *Server {
 	mux := http.NewServeMux()
 
 	// Register health endpoint
 	mux.HandleFunc("GET /health", handlers.HealthHandler)
+
+	// Register ls endpoint
+	mux.HandleFunc("GET /ls", handlers.ListHandler(directoryService))
 
 	httpServer := &http.Server{
 		Addr:         addr,
