@@ -103,3 +103,57 @@ When working with features:
 ## Serena MCP Configuration
 
 The project is configured as a bash project in Serena (`.serena/project.yml`) with symbolic code analysis tools available for navigation and refactoring.
+
+## Git Management Best Practices
+
+### Files to Include in Git
+**Always commit these implementation artifacts**:
+- `src/` - Source code
+- `tests/` - Test code (unit, integration, contract, performance)
+- `go.mod` - Go module definition
+- `CLAUDE.md` - Project documentation updates
+- `specs/{feature}/` - Feature specifications and design documents
+
+### Files to Exclude from Git
+**Never commit these files**:
+- `bin/` - Binary files (generated artifacts, can be rebuilt)
+- `.claude/` - Claude Code personal settings
+- `.serena/` - Serena MCP personal settings
+- `.specify/` - Specify framework personal configuration
+
+### Security Checks Before Commit
+**Always run these checks before git add**:
+```bash
+# Check for sensitive information patterns
+grep -r -i "password\|secret\|key\|token\|api_key\|private" src/ tests/ go.mod
+
+# Verify localhost usage (acceptable in tests only)
+grep -r "localhost" src/ tests/
+```
+
+### Pre-Commit Checklist
+- [ ] Source code included (`src/`)
+- [ ] Tests included (`tests/`)
+- [ ] Documentation updated (`CLAUDE.md`, `specs/`)
+- [ ] No binary files (`bin/` excluded)
+- [ ] No personal settings (`.claude/`, `.serena/`, `.specify/` excluded)
+- [ ] Security scan completed (no passwords/keys found)
+- [ ] Localhost usage verified (tests only)
+
+### Example Git Commands
+```bash
+# Proper file selection
+git add go.mod src/ tests/ CLAUDE.md specs/{feature-name}/
+
+# Security verification
+grep -r -i "password\|secret\|key\|token" src/ tests/ || echo "✅ No sensitive data"
+
+# Standard commit with attribution
+git commit -m "Feature description
+
+Implementation details here.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
