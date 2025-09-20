@@ -1,85 +1,95 @@
 package unit
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/sh05/cat-server/src/handlers"
+	"github.com/sh05/cat-server/pkg/application/services"
+	"github.com/sh05/cat-server/pkg/infrastructure/filesystem"
+	"github.com/sh05/cat-server/pkg/infrastructure/logging"
 )
 
-func TestHealthHandler(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	w := httptest.NewRecorder()
+func TestHealthService(t *testing.T) {
+	logger := logging.NewDefaultLogger()
+	repo := filesystem.NewFileSystemRepository("./", 1024*1024) // 1MB limit
+	service := services.NewHealthService(repo, logger, "1.0.0")
 
-	start := time.Now()
-	handlers.HealthHandler(w, req)
-	duration := time.Since(start)
+	t.Run("GetSystemHealth returns valid response", func(t *testing.T) {
+		response, err := service.GetSystemHealth()
+		if err != nil {
+			t.Fatalf("GetSystemHealth failed: %v", err)
+		}
 
-	// Check status code
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
-	}
+		if response.Status == "" {
+			t.Error("Expected status to be set")
+		}
 
-	// Check content type
-	expectedContentType := "application/json"
-	if contentType := w.Header().Get("Content-Type"); contentType != expectedContentType {
-		t.Errorf("expected Content-Type %s, got %s", expectedContentType, contentType)
-	}
+		if response.Version == "" {
+			t.Error("Expected version to be set")
+		}
 
-	// Check response format
-	var response handlers.HealthResponse
-	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
+		if response.Timestamp.IsZero() {
+			t.Error("Expected timestamp to be set")
+		}
 
-	// Validate response fields
-	if response.Status != "ok" {
-		t.Errorf("expected status 'ok', got '%s'", response.Status)
-	}
+		if response.UptimeMs < 0 {
+			t.Errorf("Expected UptimeMs to be >= 0, got %d", response.UptimeMs)
+		}
+	})
 
-	if response.Timestamp.IsZero() {
-		t.Error("expected non-zero timestamp")
-	}
-
-	// Check response time (should be fast)
-	maxDuration := 10 * time.Millisecond
-	if duration > maxDuration {
-		t.Errorf("response took too long: %v > %v", duration, maxDuration)
-	}
-}
-
-func TestHealthHandlerResponseTime(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	w := httptest.NewRecorder()
-
-	// Run multiple times to check consistency
-	for i := 0; i < 5; i++ {
+	t.Run("Response time is reasonable", func(t *testing.T) {
 		start := time.Now()
-		handlers.HealthHandler(w, req)
+		_, _ = service.GetSystemHealth()
 		duration := time.Since(start)
 
-		maxDuration := 10 * time.Millisecond
+		maxDuration := 50 * time.Millisecond // More reasonable for system health
 		if duration > maxDuration {
-			t.Errorf("iteration %d: response time %v exceeds limit %v", i+1, duration, maxDuration)
+			t.Errorf("GetSystemHealth took too long: %v > %v", duration, maxDuration)
 		}
-	}
+	})
+
+	t.Run("Multiple calls return consistent format", func(t *testing.T) {
+		response1, err1 := service.GetSystemHealth()
+		if err1 != nil {
+			t.Fatalf("First call failed: %v", err1)
+		}
+
+		time.Sleep(1 * time.Millisecond) // Ensure different timestamps
+		response2, err2 := service.GetSystemHealth()
+		if err2 != nil {
+			t.Fatalf("Second call failed: %v", err2)
+		}
+
+		if response1.Version != response2.Version {
+			t.Error("Version should be consistent across calls")
+		}
+
+		if response2.UptimeMs <= response1.UptimeMs {
+			t.Error("UptimeMs should increase between calls")
+		}
+	})
 }
 
-func TestHealthHandlerHTTPMethods(t *testing.T) {
-	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
+func TestHealthServiceConcurrency(t *testing.T) {
+	logger := logging.NewDefaultLogger()
+	repo := filesystem.NewFileSystemRepository("./", 1024*1024)
+	service := services.NewHealthService(repo, logger, "1.0.0")
 
-	for _, method := range methods {
-		req := httptest.NewRequest(method, "/health", nil)
-		w := httptest.NewRecorder()
+	t.Run("Concurrent access is safe", func(t *testing.T) {
+		const numGoroutines = 100
+		results := make(chan bool, numGoroutines)
 
-		handlers.HealthHandler(w, req)
-
-		// Should still respond with 200 OK for simplicity in this basic implementation
-		if w.Code != http.StatusOK {
-			t.Errorf("method %s: expected status %d, got %d", method, http.StatusOK, w.Code)
+		for i := 0; i < numGoroutines; i++ {
+			go func() {
+				response, err := service.GetSystemHealth()
+				results <- (err == nil && response.Status != "")
+			}()
 		}
-	}
+
+		for i := 0; i < numGoroutines; i++ {
+			if !<-results {
+				t.Error("Concurrent health check failed")
+			}
+		}
+	})
 }

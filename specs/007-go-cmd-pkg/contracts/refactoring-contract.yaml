@@ -1,0 +1,262 @@
+openapi: 3.0.3
+info:
+  title: Go Directory Structure Refactoring Contract
+  description: Contract specification for cat-server refactoring validation
+  version: 1.0.0
+
+paths:
+  /refactoring/validate:
+    post:
+      summary: Validate refactoring completion
+      description: Verify that the refactoring maintains all existing functionality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_structure:
+                  type: string
+                  enum: ["cmd-pkg-structure"]
+                  description: Target directory structure type
+                validation_scope:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["api", "functionality", "performance", "tests"]
+                  description: Scope of validation to perform
+              required:
+                - target_structure
+                - validation_scope
+      responses:
+        '200':
+          description: Refactoring validation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  structure_compliance:
+                    type: object
+                    properties:
+                      cmd_directory:
+                        type: boolean
+                        description: cmd/ directory properly structured
+                      pkg_directory:
+                        type: boolean
+                        description: pkg/ directory properly structured
+                      internal_directory:
+                        type: boolean
+                        description: internal/ directory properly structured
+                      old_src_removed:
+                        type: boolean
+                        description: Old src/ directory completely removed
+                  functionality_tests:
+                    type: object
+                    properties:
+                      health_endpoint:
+                        type: boolean
+                      list_endpoint:
+                        type: boolean
+                      cat_endpoint:
+                        type: boolean
+                      all_quality_gates_pass:
+                        type: boolean
+                  performance_impact:
+                    type: object
+                    properties:
+                      response_time_maintained:
+                        type: boolean
+                      memory_usage_maintained:
+                        type: boolean
+                      build_time_acceptable:
+                        type: boolean
+                required:
+                  - status
+                  - structure_compliance
+                  - functionality_tests
+                  - performance_impact
+        '400':
+          description: Refactoring validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [failed]
+                  failed_validations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category:
+                          type: string
+                          enum: ["structure", "functionality", "performance", "tests"]
+                        issue:
+                          type: string
+                        expected:
+                          type: string
+                        actual:
+                          type: string
+                required:
+                  - status
+                  - failed_validations
+
+  /refactoring/structure/inspect:
+    get:
+      summary: Inspect current directory structure
+      description: Get detailed information about the current project structure
+      responses:
+        '200':
+          description: Structure inspection successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_structure:
+                    type: object
+                    properties:
+                      root_directories:
+                        type: array
+                        items:
+                          type: string
+                      go_modules:
+                        type: object
+                        properties:
+                          module_name:
+                            type: string
+                          go_version:
+                            type: string
+                      package_structure:
+                        type: object
+                        additionalProperties:
+                          type: array
+                          items:
+                            type: string
+                  compliance_check:
+                    type: object
+                    properties:
+                      is_cmd_pkg_structure:
+                        type: boolean
+                      has_internal:
+                        type: boolean
+                      follows_go_standards:
+                        type: boolean
+                      architecture_pattern:
+                        type: string
+                        enum: ["none", "layered", "clean", "hexagonal", "ddd"]
+
+components:
+  schemas:
+    RefactoringValidation:
+      type: object
+      properties:
+        package_migrations:
+          type: array
+          items:
+            type: object
+            properties:
+              old_package:
+                type: string
+                description: Original package path
+              new_package:
+                type: string
+                description: New package path after refactoring
+              migration_status:
+                type: string
+                enum: ["pending", "in_progress", "completed", "failed"]
+              dependencies:
+                type: array
+                items:
+                  type: string
+                description: Packages that depend on this package
+        import_path_updates:
+          type: array
+          items:
+            type: object
+            properties:
+              file_path:
+                type: string
+              old_imports:
+                type: array
+                items:
+                  type: string
+              new_imports:
+                type: array
+                items:
+                  type: string
+              update_status:
+                type: string
+                enum: ["pending", "completed", "failed"]
+        test_coverage_impact:
+          type: object
+          properties:
+            before_refactoring:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Test coverage percentage before refactoring
+            after_refactoring:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Test coverage percentage after refactoring
+            coverage_maintained:
+              type: boolean
+              description: Whether test coverage is maintained or improved
+
+    QualityGateResults:
+      type: object
+      properties:
+        go_vet:
+          type: object
+          properties:
+            passed:
+              type: boolean
+            issues_count:
+              type: integer
+            issues:
+              type: array
+              items:
+                type: string
+        go_fmt:
+          type: object
+          properties:
+            passed:
+              type: boolean
+            files_formatted:
+              type: integer
+        go_test:
+          type: object
+          properties:
+            passed:
+              type: boolean
+            total_tests:
+              type: integer
+            passed_tests:
+              type: integer
+            failed_tests:
+              type: integer
+            coverage_percentage:
+              type: number
+        go_build:
+          type: object
+          properties:
+            passed:
+              type: boolean
+            build_time_seconds:
+              type: number
+            binary_size_bytes:
+              type: integer
+      required:
+        - go_vet
+        - go_fmt
+        - go_test
+        - go_build

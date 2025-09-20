@@ -89,9 +89,9 @@ func TestLsEndpoint_EndToEnd(t *testing.T) {
 			t.Logf("Testing directory: %s", tt.serverDir)
 			t.Logf("Expected %d files", len(tt.expectedFiles))
 
-			// Mock server creation (will be replaced with actual server)
+			// Mock server for testing
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Placeholder - will be replaced with actual server
+				// Test server implementation
 				if r.URL.Path != "/ls" {
 					http.NotFound(w, r)
 					return
