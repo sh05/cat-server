@@ -1,12 +1,18 @@
-# cat-server
+# 🐱 cat-server
 
-A Go-based HTTP server that provides file system utilities, like an enhanced cat command with REST API capabilities.
+A Go-based HTTP server that displays file contents and directory listings over HTTP API. Think of it as bringing the Unix `cat` and `ls` commands to the web - you can now peek into files and browse directories using your favorite HTTP client or browser! 🌐
 
-## Features
+**What does it do?**
+- 📂 **List files** in a directory (like `ls /path/to/dir`)
+- 📄 **Show file contents** (like `cat /path/to/file.txt`)
+- 🏥 **Health monitoring** to check if the server is running
+- All accessible via simple HTTP GET requests!
 
-- **Health Check Endpoint**: Monitor server status with `/health`
-- **File List Endpoint**: Get directory file listings with `/ls`
-- **File Content Endpoint**: Read individual file contents with `/cat/{filename}`
+## ✨ Features
+
+- **Health Check Endpoint** 🏥: Monitor server status with `/health`
+- **File List Endpoint** 📂: Get directory file listings with `/ls` (like Unix `ls`)
+- **File Content Endpoint** 📄: Display file contents with `/cat/{filename}` (like Unix `cat`)
 - **Clean Architecture**: Domain-driven design with layered architecture
 - **Security First**: Path traversal protection and input validation
 - **Flexible Directory Selection**: Configure target directory via command-line flag
@@ -14,9 +20,9 @@ A Go-based HTTP server that provides file system utilities, like an enhanced cat
 - **Multiple Response Formats**: JSON, HTML, and plain text support for health endpoint
 - **Structured Logging**: Comprehensive request/response logging with slog
 
-## Quick Start
+## 🚀 Quick Start
 
-### Build and Run
+### 🔨 Build and Run
 
 ```bash
 # Build the server
@@ -29,11 +35,11 @@ go build -o bin/cat-server ./cmd/cat-server/
 ./bin/cat-server -dir /path/to/your/directory
 ```
 
-### API Endpoints
+### 🌐 API Endpoints
 
-#### Health Check - `GET /health`
+#### 🏥 Health Check - `GET /health`
 
-Check server health and status.
+Check if your cat-server is purring along nicely! 🐱
 
 **Example:**
 ```bash
@@ -48,9 +54,9 @@ curl http://localhost:8080/health
 }
 ```
 
-#### File List - `GET /ls`
+#### 📂 File List - `GET /ls`
 
-Get a comprehensive list of all files in the configured directory with detailed metadata.
+Browse through files in a directory, just like wandering around your file system! Perfect for when you want to see what's available to cat. 🗂️
 
 **Example:**
 ```bash
@@ -88,9 +94,9 @@ curl http://localhost:8080/ls
 }
 ```
 
-#### File Content - `GET /cat/{filename}`
+#### 📄 File Content - `GET /cat/{filename}`
 
-Read the content of a specific file with metadata and content type detection.
+Read what's inside a file, exactly like the good old Unix `cat` command! Great for peeking into config files, logs, or any text files. 📖
 
 **Example:**
 ```bash
@@ -114,46 +120,46 @@ curl http://localhost:8080/cat/hello.txt
 }
 ```
 
-### Configuration Options
+### ⚙️ Configuration Options
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-dir` | `./files/` | Directory to list files from |
 
-### Examples
+### 💡 Examples
 
 ```bash
-# List files from default directory
+# What files are in the default directory? 🤔
 curl http://localhost:8080/ls
 
-# Read a specific file
+# What's inside hello.txt? 👀
 curl http://localhost:8080/cat/hello.txt
 
-# Start server with custom directory
+# Let's explore a different directory! 🚀
 ./bin/cat-server -dir ./my-documents
 curl http://localhost:8080/ls
 
-# Pretty print JSON output
+# Make the JSON output pretty! ✨
 curl -s http://localhost:8080/ls | jq .
 curl -s http://localhost:8080/cat/config.json | jq .
 
-# Check server health
+# Is the cat-server healthy and happy? 🏥
 curl http://localhost:8080/health
 
-# Get HTML health response
+# Want HTML instead of JSON? No problem! 🌐
 curl -H "Accept: text/html" http://localhost:8080/health
 ```
 
-## Development
+## 🛠️ Development
 
-### Prerequisites
+### 📋 Prerequisites
 
 - Go 1.21 or later
 - jq (optional, for JSON formatting)
 
-### Quality Gates
+### ✅ Quality Gates
 
-All code changes must pass these quality gates:
+Before your code can join the cat-server family, it must pass these quality checks:
 
 ```bash
 go vet ./cmd/cat-server/ ./pkg/... ./internal/...   # Static analysis
@@ -162,7 +168,7 @@ go test ./pkg/... ./internal/...                    # Run all tests
 go build ./cmd/cat-server/                          # Compilation check
 ```
 
-### Testing
+### 🧪 Testing
 
 ```bash
 # Run all tests
@@ -184,7 +190,7 @@ go test ./specs/*/contracts/ -v
 go test ./pkg/... ./internal/... -cover
 ```
 
-### Project Structure
+### 🏗️ Project Structure
 
 The project follows Go standard project layout with Clean Architecture principles:
 
@@ -213,7 +219,7 @@ The project follows Go standard project layout with Clean Architecture principle
 └── bin/                        # Compiled binaries
 ```
 
-### Architecture
+### 🏛️ Architecture
 
 The application follows **Clean Architecture** and **Domain Driven Design** principles:
 
@@ -228,9 +234,9 @@ The application follows **Clean Architecture** and **Domain Driven Design** prin
 - **Testability**: Domain logic is isolated and easily testable
 - **Security**: Input validation and path traversal protection at domain level
 
-## API Specification
+## 📜 API Specification
 
-### Error Responses
+### ⚠️ Error Responses
 
 All endpoints return consistent error responses:
 
@@ -243,7 +249,7 @@ All endpoints return consistent error responses:
 }
 ```
 
-### Status Codes
+### 📈 Status Codes
 
 - `200 OK` - Successful request
 - `400 Bad Request` - Invalid directory path or request
@@ -253,7 +259,7 @@ All endpoints return consistent error responses:
 - `413 Payload Too Large` - File size exceeds limit
 - `500 Internal Server Error` - Server error
 
-## Security
+## 🔒 Security
 
 - Path traversal protection (prevents `../` attacks)
 - Null byte injection prevention
@@ -261,13 +267,15 @@ All endpoints return consistent error responses:
 - File path length limits
 - Read permission verification
 
-## Performance
+## ⚡ Performance
 
 - Target response time: <100ms for directories with <1000 files
 - Memory efficient directory reading
 - Structured logging for performance monitoring
 - Concurrent request support
 
-## License
+## 📄 License
 
-This project follows Go community best practices and is designed for educational and utility purposes.
+This project follows Go community best practices and is designed for educational and utility purposes. Made with 💜 for developers who love the simplicity of Unix commands and the power of HTTP APIs.
+
+Feel free to fork, contribute, or just use it to make your file browsing a little more web-friendly! 🐱
