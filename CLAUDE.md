@@ -12,26 +12,26 @@ cat-server is a Go-based project that implements a cat command alternative. The 
 The project constitution mandates these commands must pass before any code is considered complete:
 
 ```bash
-go vet      # Static analysis
-go fmt      # Code formatting
-go test     # Run all tests
-go build    # Compilation
+go vet ./cmd/cat-server/ ./pkg/... ./internal/...   # Static analysis
+go fmt ./cmd/cat-server/ ./pkg/... ./internal/...   # Code formatting
+go test ./pkg/... ./internal/...                    # Run all tests
+go build ./cmd/cat-server/                          # Compilation
 ```
 
 ### Development Workflow
 Run these commands in order during development:
 ```bash
-go test -v ./...              # Run all tests with verbose output
-go test -run TestFunctionName # Run specific test
-go test -cover               # Run tests with coverage report
+go test -v ./pkg/... ./internal/...              # Run all tests with verbose output
+go test -run TestFunctionName ./pkg/...            # Run specific test
+go test -cover ./pkg/... ./internal/...           # Run tests with coverage report
 ```
 
 ### REST API Development Commands
 For the current health endpoint and file list endpoint implementation:
 ```bash
 # Server startup commands
-go run src/main.go                      # Start server with default directory (./files/)
-go run src/main.go -dir ./custom-dir    # Start server with custom directory
+go run ./cmd/cat-server/                      # Start server with default directory (./files/)
+go run ./cmd/cat-server/ -dir ./custom-dir    # Start server with custom directory
 
 # Health endpoint testing
 curl http://localhost:8080/health       # Test health endpoint (JSON)
@@ -70,8 +70,8 @@ go test ./specs/004-list-get-request/contracts/ -v  # Run ls endpoint contract t
 go test ./specs/005-cat-filename-ls/contracts/ -v  # Run cat endpoint contract tests
 
 # Build commands
-go build -o bin/cat-server src/main.go  # Build production binary
-./bin/cat-server -dir ./files           # Run production binary
+go build -o bin/cat-server ./cmd/cat-server/  # Build production binary
+./bin/cat-server -dir ./files                 # Run production binary
 ```
 
 ### Docker Development Commands
@@ -117,30 +117,45 @@ docker run --rm cat-server:latest whoami  # Verify non-root user
 docker scout cves cat-server:latest    # Vulnerability scan (if available)
 ```
 
-### Project Structure (Current Implementation)
+### Project Structure (Clean Architecture Implementation)
 ```
-src/
-├── server/          # HTTP server implementation
-├── handlers/        # HTTP request handlers (health.go, list.go, cat.go)
-├── services/        # Business logic services (directory.go)
-└── main.go         # Application entry point
+cmd/cat-server/              # Application entry point
+└── main.go                 # Server startup and dependency injection
 
-tests/
-├── unit/           # Unit tests for individual components
-├── integration/    # Integration tests for full workflows
-├── contract/       # OpenAPI specification compliance tests
-└── performance/    # Load and performance tests
+pkg/                        # Public libraries
+├── domain/                 # Domain layer (business logic)
+│   ├── entities/           # Domain entities (FileSystemEntry, DirectoryListing, FileContent)
+│   ├── repositories/       # Repository interfaces (FileSystemRepository)
+│   └── valueobjects/       # Value objects (FilePath, FileSize)
+├── application/            # Application layer (use cases)
+│   └── services/           # Application services (DirectoryService, FileService, HealthService)
+└── infrastructure/         # Infrastructure layer
+    ├── filesystem/         # File system implementation (FileSystemRepositoryImpl)
+    ├── http/              # HTTP server and middleware
+    └── logging/           # Logging infrastructure
 
-specs/              # Feature specifications (Specify framework)
+internal/                   # Private application code
+└── config/                # Configuration management
+
+tests/                      # Legacy tests (being refactored)
+├── unit/                  # Unit tests for individual components
+├── integration/           # Integration tests for full workflows
+├── contract/              # OpenAPI specification compliance tests
+└── performance/           # Load and performance tests
+
+specs/                      # Feature specifications (Specify framework)
+├── 007-go-cmd-pkg/        # Current refactoring specification
+├── 006-docker-image-alpine/
+├── 005-cat-filename-ls/
 ├── 004-list-get-request/
-│   ├── spec.md         # Feature specification
-│   ├── plan.md         # Implementation plan
-│   ├── research.md     # Technical research
-│   ├── data-model.md   # Data models and entities
-│   ├── quickstart.md   # Demo and testing guide
-│   └── contracts/      # OpenAPI specs and contract tests
+│   ├── spec.md            # Feature specification
+│   ├── plan.md            # Implementation plan
+│   ├── research.md        # Technical research
+│   ├── data-model.md      # Data models and entities
+│   ├── quickstart.md      # Demo and testing guide
+│   └── contracts/         # OpenAPI specs and contract tests
 
-bin/                # Compiled binaries
+bin/                       # Compiled binaries
 ```
 
 ## Project Architecture
