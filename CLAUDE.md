@@ -43,19 +43,31 @@ curl http://localhost:8080/ls         # Get file list from configured directory
 curl -s http://localhost:8080/ls | jq .  # Pretty print JSON response
 curl -w "%{time_total}\n" -s http://localhost:8080/ls >/dev/null  # Measure response time
 
+# File content endpoint testing (/cat/{filename})
+curl http://localhost:8080/cat/example.txt  # Get specific file content
+curl -s http://localhost:8080/cat/config.json | jq .  # Pretty print file content JSON
+curl -s http://localhost:8080/cat/.env | jq .content  # Extract only content field
+curl -w "%{time_total}\n" -s http://localhost:8080/cat/README.md >/dev/null  # Measure response time
+
 # Testing with different directories
-mkdir -p ./test-files && echo "test" > ./test-files/sample.txt
+mkdir -p ./test-files && echo "test content" > ./test-files/sample.txt
 go run src/main.go -dir ./test-files     # Test with custom directory
 
-# Error case testing
+# Error case testing (/ls)
 curl -X POST http://localhost:8080/ls # Test method not allowed (should return 405)
+
+# Error case testing (/cat/{filename})
+curl http://localhost:8080/cat/nonexistent.txt  # Test file not found (should return 404)
+curl http://localhost:8080/cat/../etc/passwd    # Test path traversal (should return 400)
+curl -X POST http://localhost:8080/cat/test.txt # Test method not allowed (should return 405)
 
 # Development testing commands
 go test ./tests/unit/... -v             # Run unit tests
 go test ./tests/integration/... -v      # Run integration tests
 go test ./tests/contract/... -v         # Run OpenAPI contract tests
 go test ./tests/performance/... -v      # Run load tests
-go test ./specs/004-list-get-request/contracts/ -v  # Run feature contract tests
+go test ./specs/004-list-get-request/contracts/ -v  # Run ls endpoint contract tests
+go test ./specs/005-cat-filename-ls/contracts/ -v  # Run cat endpoint contract tests
 
 # Build commands
 go build -o bin/cat-server src/main.go  # Build production binary
@@ -66,7 +78,7 @@ go build -o bin/cat-server src/main.go  # Build production binary
 ```
 src/
 ├── server/          # HTTP server implementation
-├── handlers/        # HTTP request handlers (health.go, list.go)
+├── handlers/        # HTTP request handlers (health.go, list.go, cat.go)
 ├── services/        # Business logic services (directory.go)
 └── main.go         # Application entry point
 
