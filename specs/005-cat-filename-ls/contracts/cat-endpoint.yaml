@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: cat-server File Content API
+  description: API for retrieving file contents from specified directories
+  version: 1.0.0
+  contact:
+    name: cat-server development team
+    url: https://github.com/sh05/cat-server
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+paths:
+  /cat/{filename}:
+    get:
+      summary: Get file content from directory
+      description: |
+        Retrieves the content of a specific file from the directory specified
+        during server startup with the -dir flag. Only text files are supported.
+        Binary files will return a 415 error. Files larger than 10MB will return a 413 error.
+        Default directory is ./files/ if no -dir argument is provided.
+      operationId: getFileContent
+      tags:
+        - files
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          description: Name of the file to retrieve (without path)
+          schema:
+            type: string
+            maxLength: 255
+            pattern: '^[^\/\\\0]+$'
+            example: "example.txt"
+      responses:
+        '200':
+          description: Successfully retrieved file content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileContentResponse'
+              examples:
+                text_file:
+                  summary: Text file content
+                  value:
+                    content: "Hello, World!\nThis is a sample file."
+                    filename: "example.txt"
+                    size: 34
+                    directory: "./files/"
+                    generated_at: "2025-09-20T10:00:00Z"
+                empty_file:
+                  summary: Empty file
+                  value:
+                    content: ""
+                    filename: "empty.txt"
+                    size: 0
+                    directory: "./files/"
+                    generated_at: "2025-09-20T10:00:00Z"
+        '400':
+          description: Bad request - Invalid filename or path traversal attempt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                path_traversal:
+                  summary: Path traversal attempt
+                  value:
+                    error: "invalid filename"
+                    filename: "../secret.txt"
+                    path: "./files/../secret.txt"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 400
+                invalid_filename:
+                  summary: Invalid filename
+                  value:
+                    error: "invalid filename"
+                    filename: "file\x00name.txt"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 400
+        '403':
+          description: Forbidden - No read permission for file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_permission:
+                  summary: No read permission
+                  value:
+                    error: "permission denied"
+                    filename: "restricted.txt"
+                    path: "./files/restricted.txt"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 403
+        '404':
+          description: Not found - File does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                file_not_found:
+                  summary: File not found
+                  value:
+                    error: "file not found"
+                    filename: "nonexistent.txt"
+                    path: "./files/nonexistent.txt"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 404
+        '413':
+          description: Payload too large - File exceeds size limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                file_too_large:
+                  summary: File size exceeds 10MB limit
+                  value:
+                    error: "file too large"
+                    filename: "large_file.txt"
+                    path: "./files/large_file.txt"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 413
+        '415':
+          description: Unsupported media type - Binary file not supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                binary_file:
+                  summary: Binary file not supported
+                  value:
+                    error: "binary file not supported"
+                    filename: "image.png"
+                    path: "./files/image.png"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 415
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                system_error:
+                  summary: System error during file reading
+                  value:
+                    error: "internal server error"
+                    filename: "system.log"
+                    path: "./files/system.log"
+                    timestamp: "2025-09-20T10:00:00Z"
+                    status_code: 500
+
+components:
+  schemas:
+    FileContentResponse:
+      type: object
+      required:
+        - content
+        - filename
+        - size
+        - directory
+        - generated_at
+      properties:
+        content:
+          type: string
+          description: The content of the file as UTF-8 text
+          example: "Hello, World!\nThis is a sample file."
+        filename:
+          type: string
+          description: The name of the file that was retrieved
+          maxLength: 255
+          example: "example.txt"
+        size:
+          type: integer
+          format: int64
+          description: Size of the file in bytes
+          minimum: 0
+          maximum: 10485760
+          example: 34
+        directory:
+          type: string
+          description: The directory path that was scanned
+          example: "./files/"
+          maxLength: 4096
+        generated_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the file content was retrieved
+          example: "2025-09-20T10:00:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - timestamp
+        - status_code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "file not found"
+          maxLength: 1000
+        filename:
+          type: string
+          description: The filename that caused the error (if applicable)
+          example: "nonexistent.txt"
+          maxLength: 255
+        path:
+          type: string
+          description: The full file path that caused the error (if applicable)
+          example: "./files/nonexistent.txt"
+          maxLength: 4096
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the error occurred
+          example: "2025-09-20T10:00:00Z"
+        status_code:
+          type: integer
+          description: HTTP status code
+          enum: [400, 403, 404, 413, 415, 500]
+          example: 404
+
+  examples:
+    SuccessfulFileContent:
+      summary: Successful file content retrieval
+      value:
+        content: "# Configuration File\nserver_port=8080\ndebug_mode=false"
+        filename: "config.txt"
+        size: 45
+        directory: "./files/"
+        generated_at: "2025-09-20T10:00:00Z"
+
+    EmptyFile:
+      summary: Empty file content
+      value:
+        content: ""
+        filename: "empty.txt"
+        size: 0
+        directory: "./files/"
+        generated_at: "2025-09-20T10:00:00Z"
+
+    FileNotFoundError:
+      summary: File not found error
+      value:
+        error: "file not found"
+        filename: "missing.txt"
+        path: "./files/missing.txt"
+        timestamp: "2025-09-20T10:00:00Z"
+        status_code: 404
+
+    BinaryFileError:
+      summary: Binary file error
+      value:
+        error: "binary file not supported"
+        filename: "image.jpg"
+        path: "./files/image.jpg"
+        timestamp: "2025-09-20T10:00:00Z"
+        status_code: 415
+
+tags:
+  - name: files
+    description: File system operations

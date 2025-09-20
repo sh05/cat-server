@@ -26,6 +26,9 @@ func New(addr string, directoryService *services.DirectoryService) *Server {
 	// Register ls endpoint
 	mux.HandleFunc("GET /ls", handlers.ListHandler(directoryService))
 
+	// Register cat endpoint
+	mux.HandleFunc("GET /cat/{filename}", handlers.CatHandler(directoryService))
+
 	httpServer := &http.Server{
 		Addr:         addr,
 		Handler:      mux,
