@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Docker Build Contract Specification
+  description: Contract specification for cat-server Docker image build process
+  version: 1.0.0
+
+paths:
+  /docker/build:
+    post:
+      summary: Build Docker image
+      description: Execute docker build command to create cat-server image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dockerfile_path:
+                  type: string
+                  default: "./Dockerfile"
+                  description: Path to Dockerfile
+                build_context:
+                  type: string
+                  default: "."
+                  description: Build context directory
+                image_name:
+                  type: string
+                  default: "cat-server"
+                  description: Name for the built image
+                image_tag:
+                  type: string
+                  default: "latest"
+                  description: Tag for the built image
+              required:
+                - dockerfile_path
+                - build_context
+                - image_name
+      responses:
+        '200':
+          description: Build successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  image_id:
+                    type: string
+                    description: Docker image ID
+                  image_size:
+                    type: integer
+                    description: Image size in bytes
+                    maximum: 52428800  # 50MB
+                  build_time:
+                    type: number
+                    description: Build time in seconds
+                    maximum: 60
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                required:
+                  - status
+                  - image_id
+                  - image_size
+                  - build_time
+        '400':
+          description: Build failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [failed]
+                  error_message:
+                    type: string
+                  build_logs:
+                    type: string
+                required:
+                  - status
+                  - error_message
+
+  /docker/run:
+    post:
+      summary: Run Docker container
+      description: Execute docker run command to start cat-server container
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                image_name:
+                  type: string
+                  default: "cat-server:latest"
+                  description: Docker image to run
+                container_name:
+                  type: string
+                  default: "cat-server-test"
+                  description: Name for the container
+                port_mapping:
+                  type: string
+                  default: "8080:8080"
+                  description: Port mapping host:container
+                detach:
+                  type: boolean
+                  default: true
+                  description: Run in detached mode
+                remove:
+                  type: boolean
+                  default: true
+                  description: Remove container when it exits
+              required:
+                - image_name
+      responses:
+        '200':
+          description: Container started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [running]
+                  container_id:
+                    type: string
+                    description: Docker container ID
+                  startup_time:
+                    type: number
+                    description: Startup time in seconds
+                    maximum: 2
+                  health_status:
+                    type: string
+                    enum: [healthy, unhealthy, starting]
+                  ports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        host_port:
+                          type: integer
+                        container_port:
+                          type: integer
+                        protocol:
+                          type: string
+                required:
+                  - status
+                  - container_id
+                  - startup_time
+        '500':
+          description: Container failed to start
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [failed]
+                  error_message:
+                    type: string
+                  container_logs:
+                    type: string
+                required:
+                  - status
+                  - error_message
+
+  /docker/inspect:
+    get:
+      summary: Inspect Docker image
+      description: Get detailed information about the built Docker image
+      parameters:
+        - name: image_name
+          in: query
+          required: true
+          schema:
+            type: string
+            default: "cat-server:latest"
+      responses:
+        '200':
+          description: Image inspection successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_id:
+                    type: string
+                  size:
+                    type: integer
+                    description: Image size in bytes
+                    maximum: 52428800  # 50MB
+                  architecture:
+                    type: string
+                    enum: [amd64, arm64]
+                  os:
+                    type: string
+                    enum: [linux]
+                  layers:
+                    type: integer
+                    description: Number of layers
+                  security_scan:
+                    type: object
+                    properties:
+                      vulnerabilities:
+                        type: object
+                        properties:
+                          critical:
+                            type: integer
+                            maximum: 0
+                          high:
+                            type: integer
+                            maximum: 0
+                          medium:
+                            type: integer
+                          low:
+                            type: integer
+                  user:
+                    type: string
+                    enum: [app]
+                    description: Default user (must be non-root)
+                  exposed_ports:
+                    type: array
+                    items:
+                      type: string
+                    default: ["8080/tcp"]
+                  health_check:
+                    type: object
+                    properties:
+                      test:
+                        type: array
+                        items:
+                          type: string
+                      interval:
+                        type: string
+                        default: "30s"
+                      timeout:
+                        type: string
+                        default: "3s"
+                      retries:
+                        type: integer
+                        default: 3
+                required:
+                  - image_id
+                  - size
+                  - architecture
+                  - os
+                  - user
+                  - exposed_ports
+
+components:
+  schemas:
+    BuildMetrics:
+      type: object
+      properties:
+        total_size:
+          type: integer
+          description: Total image size in bytes
+          maximum: 52428800  # 50MB
+        layer_count:
+          type: integer
+          description: Number of layers in image
+        build_duration:
+          type: number
+          description: Build time in seconds
+        cache_efficiency:
+          type: number
+          description: Percentage of layers cached
+          minimum: 0
+          maximum: 100
+      required:
+        - total_size
+        - layer_count
+        - build_duration

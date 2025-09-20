@@ -37,14 +37,14 @@ func setupCatTestFilesystem(t *testing.T) (string, func()) {
 
 	// Create diverse test files including different content types
 	testFiles := map[string]string{
-		"hello.txt":        "Hello, World!",
-		"multiline.txt":    "Line 1\nLine 2\nLine 3",
-		"empty.txt":        "",
-		"config.json":      `{"name": "config", "port": 8080}`,
-		"README.md":        "# README\nThis is a test file.",
-		".env":             "SECRET_KEY=test123",
-		".hidden":          "hidden file content",
-		"spaces file.txt":  "file with spaces in name",
+		"hello.txt":       "Hello, World!",
+		"multiline.txt":   "Line 1\nLine 2\nLine 3",
+		"empty.txt":       "",
+		"config.json":     `{"name": "config", "port": 8080}`,
+		"README.md":       "# README\nThis is a test file.",
+		".env":            "SECRET_KEY=test123",
+		".hidden":         "hidden file content",
+		"spaces file.txt": "file with spaces in name",
 		"japanese-文字.txt": "日本語内容",
 	}
 

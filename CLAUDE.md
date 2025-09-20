@@ -74,6 +74,49 @@ go build -o bin/cat-server src/main.go  # Build production binary
 ./bin/cat-server -dir ./files           # Run production binary
 ```
 
+### Docker Development Commands
+For containerized deployment and development:
+```bash
+# Docker image build
+docker build -t cat-server:latest .     # Build Docker image with Alpine base
+docker build --no-cache -t cat-server:latest .  # Build without cache
+
+# Container management
+docker run -d --name cat-server -p 8080:8080 cat-server:latest  # Start container
+docker run -d --name cat-server -p 8080:8080 -v $(pwd)/files:/app/files cat-server:latest  # With volume mount
+docker run -it --rm cat-server:latest /bin/sh  # Interactive debugging
+
+# Container inspection and debugging
+docker ps                              # List running containers
+docker logs cat-server                 # View container logs
+docker exec cat-server ps aux          # Check processes inside container
+docker inspect cat-server --format='{{.State.Health.Status}}'  # Health status
+
+# Image analysis
+docker images cat-server               # List cat-server images
+docker history cat-server:latest       # Show image layers
+docker inspect cat-server:latest       # Detailed image information
+
+# Container testing
+curl http://localhost:8080/health       # Test containerized health endpoint
+curl http://localhost:8080/ls          # Test containerized file list
+curl http://localhost:8080/cat/go.mod   # Test containerized file content
+
+# Cleanup
+docker stop cat-server                 # Stop container
+docker rm cat-server                   # Remove container
+docker rmi cat-server:latest           # Remove image
+docker system prune -f                 # Clean up unused resources
+
+# Performance monitoring
+docker stats cat-server --no-stream    # Check resource usage
+time docker run --rm cat-server:latest --help  # Measure startup time
+
+# Security checks
+docker run --rm cat-server:latest whoami  # Verify non-root user
+docker scout cves cat-server:latest    # Vulnerability scan (if available)
+```
+
 ### Project Structure (Current Implementation)
 ```
 src/
