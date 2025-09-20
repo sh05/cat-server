@@ -137,7 +137,7 @@ pkg/                        # Public libraries
 internal/                   # Private application code
 └── config/                # Configuration management
 
-tests/                      # Legacy tests (being refactored)
+tests/                      # Comprehensive test suite
 ├── unit/                  # Unit tests for individual components
 ├── integration/           # Integration tests for full workflows
 ├── contract/              # OpenAPI specification compliance tests

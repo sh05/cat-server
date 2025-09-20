@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// Refactoring contract tests for Go directory structure migration
+// Refactoring contract tests for Go directory structure implementation
 func TestRefactoringValidationContract(t *testing.T) {
 	tests := []struct {
 		name               string

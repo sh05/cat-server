@@ -204,7 +204,7 @@ The project follows Go standard project layout with Clean Architecture principle
 │       └── logging/           # Logging infrastructure
 ├── internal/                   # Private application code
 │   └── config/                # Configuration management
-├── tests/                      # Legacy tests (being refactored)
+├── tests/                      # Comprehensive test suite
 │   ├── unit/                  # Unit tests
 │   ├── integration/           # Integration tests
 │   ├── contract/              # API contract tests
