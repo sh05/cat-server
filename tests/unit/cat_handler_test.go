@@ -44,11 +44,11 @@ func TestCatHandler_SuccessfulResponse(t *testing.T) {
 
 	// Create test files
 	testFiles := map[string]string{
-		"hello.txt":      "Hello, World!",
-		"multiline.txt":  "Line 1\nLine 2\nLine 3",
-		"empty.txt":      "",
-		"config.json":    `{"key": "value"}`,
-		".hidden":        "hidden content",
+		"hello.txt":     "Hello, World!",
+		"multiline.txt": "Line 1\nLine 2\nLine 3",
+		"empty.txt":     "",
+		"config.json":   `{"key": "value"}`,
+		".hidden":       "hidden content",
 	}
 
 	for filename, content := range testFiles {
@@ -59,46 +59,46 @@ func TestCatHandler_SuccessfulResponse(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		filename         string
-		expectedContent  string
-		expectedStatus   int
-		expectedSize     int64
+		name            string
+		filename        string
+		expectedContent string
+		expectedStatus  int
+		expectedSize    int64
 	}{
 		{
-			name:             "simple_text_file",
-			filename:         "hello.txt",
-			expectedContent:  "Hello, World!",
-			expectedStatus:   200,
-			expectedSize:     13,
+			name:            "simple_text_file",
+			filename:        "hello.txt",
+			expectedContent: "Hello, World!",
+			expectedStatus:  200,
+			expectedSize:    13,
 		},
 		{
-			name:             "multiline_text_file",
-			filename:         "multiline.txt",
-			expectedContent:  "Line 1\nLine 2\nLine 3",
-			expectedStatus:   200,
-			expectedSize:     21,
+			name:            "multiline_text_file",
+			filename:        "multiline.txt",
+			expectedContent: "Line 1\nLine 2\nLine 3",
+			expectedStatus:  200,
+			expectedSize:    21,
 		},
 		{
-			name:             "empty_file",
-			filename:         "empty.txt",
-			expectedContent:  "",
-			expectedStatus:   200,
-			expectedSize:     0,
+			name:            "empty_file",
+			filename:        "empty.txt",
+			expectedContent: "",
+			expectedStatus:  200,
+			expectedSize:    0,
 		},
 		{
-			name:             "json_file",
-			filename:         "config.json",
-			expectedContent:  `{"key": "value"}`,
-			expectedStatus:   200,
-			expectedSize:     15,
+			name:            "json_file",
+			filename:        "config.json",
+			expectedContent: `{"key": "value"}`,
+			expectedStatus:  200,
+			expectedSize:    15,
 		},
 		{
-			name:             "hidden_file",
-			filename:         ".hidden",
-			expectedContent:  "hidden content",
-			expectedStatus:   200,
-			expectedSize:     14,
+			name:            "hidden_file",
+			filename:        ".hidden",
+			expectedContent: "hidden content",
+			expectedStatus:  200,
+			expectedSize:    14,
 		},
 	}
 

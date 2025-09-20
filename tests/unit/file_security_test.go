@@ -61,109 +61,109 @@ func TestPathTraversalValidation(t *testing.T) {
 	validator := &MockFileSecurityValidator{}
 
 	tests := []struct {
-		name           string
-		filename       string
+		name            string
+		filename        string
 		shouldBeBlocked bool
-		description    string
+		description     string
 	}{
 		// Basic path traversal attempts
 		{
-			name:           "simple_parent_directory",
-			filename:       "../secret.txt",
+			name:            "simple_parent_directory",
+			filename:        "../secret.txt",
 			shouldBeBlocked: true,
-			description:    "Basic parent directory traversal",
+			description:     "Basic parent directory traversal",
 		},
 		{
-			name:           "multiple_parent_directories",
-			filename:       "../../etc/passwd",
+			name:            "multiple_parent_directories",
+			filename:        "../../etc/passwd",
 			shouldBeBlocked: true,
-			description:    "Multiple level directory traversal",
+			description:     "Multiple level directory traversal",
 		},
 		{
-			name:           "deep_path_traversal",
-			filename:       "../../../../../../../etc/passwd",
+			name:            "deep_path_traversal",
+			filename:        "../../../../../../../etc/passwd",
 			shouldBeBlocked: true,
-			description:    "Deep directory traversal",
+			description:     "Deep directory traversal",
 		},
 
 		// Windows-style path traversal
 		{
-			name:           "windows_backslash_traversal",
-			filename:       "..\\..\\windows\\system32\\config\\sam",
+			name:            "windows_backslash_traversal",
+			filename:        "..\\..\\windows\\system32\\config\\sam",
 			shouldBeBlocked: true,
-			description:    "Windows-style backslash path traversal",
+			description:     "Windows-style backslash path traversal",
 		},
 		{
-			name:           "mixed_slash_traversal",
-			filename:       "../..\\etc/passwd",
+			name:            "mixed_slash_traversal",
+			filename:        "../..\\etc/passwd",
 			shouldBeBlocked: true,
-			description:    "Mixed forward and backslash traversal",
+			description:     "Mixed forward and backslash traversal",
 		},
 
 		// Encoded path traversal attempts
 		{
-			name:           "url_encoded_traversal",
-			filename:       "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+			name:            "url_encoded_traversal",
+			filename:        "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
 			shouldBeBlocked: true,
-			description:    "URL-encoded path traversal",
+			description:     "URL-encoded path traversal",
 		},
 		{
-			name:           "double_url_encoded_traversal",
-			filename:       "%252e%252e%252f%252e%252e%252f%252e%252e%252fetc%252fpasswd",
+			name:            "double_url_encoded_traversal",
+			filename:        "%252e%252e%252f%252e%252e%252f%252e%252e%252fetc%252fpasswd",
 			shouldBeBlocked: true,
-			description:    "Double URL-encoded path traversal",
+			description:     "Double URL-encoded path traversal",
 		},
 		{
-			name:           "unicode_encoded_traversal",
-			filename:       "\u002e\u002e\u002f\u002e\u002e\u002f\u002e\u002e\u002fetc\u002fpasswd",
+			name:            "unicode_encoded_traversal",
+			filename:        "\u002e\u002e\u002f\u002e\u002e\u002f\u002e\u002e\u002fetc\u002fpasswd",
 			shouldBeBlocked: true,
-			description:    "Unicode-encoded path traversal",
+			description:     "Unicode-encoded path traversal",
 		},
 
 		// Alternative encoding attempts
 		{
-			name:           "dot_dot_slash_variations",
-			filename:       "....//....//....//etc/passwd",
+			name:            "dot_dot_slash_variations",
+			filename:        "....//....//....//etc/passwd",
 			shouldBeBlocked: true,
-			description:    "Dot-dot-slash variations",
+			description:     "Dot-dot-slash variations",
 		},
 		{
-			name:           "reversed_slash_traversal",
-			filename:       "..\\..\\..\\etc\\passwd",
+			name:            "reversed_slash_traversal",
+			filename:        "..\\..\\..\\etc\\passwd",
 			shouldBeBlocked: true,
-			description:    "Reversed slash path traversal",
+			description:     "Reversed slash path traversal",
 		},
 
 		// Legitimate filenames that should NOT be blocked
 		{
-			name:           "normal_filename",
-			filename:       "document.txt",
+			name:            "normal_filename",
+			filename:        "document.txt",
 			shouldBeBlocked: false,
-			description:    "Normal filename should be allowed",
+			description:     "Normal filename should be allowed",
 		},
 		{
-			name:           "hidden_file",
-			filename:       ".env",
+			name:            "hidden_file",
+			filename:        ".env",
 			shouldBeBlocked: false,
-			description:    "Hidden file should be allowed",
+			description:     "Hidden file should be allowed",
 		},
 		{
-			name:           "filename_with_dots",
-			filename:       "my.config.json",
+			name:            "filename_with_dots",
+			filename:        "my.config.json",
 			shouldBeBlocked: false,
-			description:    "Filename with dots should be allowed",
+			description:     "Filename with dots should be allowed",
 		},
 		{
-			name:           "filename_with_spaces",
-			filename:       "file with spaces.txt",
+			name:            "filename_with_spaces",
+			filename:        "file with spaces.txt",
 			shouldBeBlocked: false,
-			description:    "Filename with spaces should be allowed",
+			description:     "Filename with spaces should be allowed",
 		},
 		{
-			name:           "filename_with_unicode",
-			filename:       "japanese-文字.txt",
+			name:            "filename_with_unicode",
+			filename:        "japanese-文字.txt",
 			shouldBeBlocked: false,
-			description:    "Filename with Unicode should be allowed",
+			description:     "Filename with Unicode should be allowed",
 		},
 	}
 
@@ -216,46 +216,46 @@ func TestNullByteInjectionValidation(t *testing.T) {
 	validator := &MockFileSecurityValidator{}
 
 	tests := []struct {
-		name           string
-		filename       string
+		name            string
+		filename        string
 		shouldBeBlocked bool
-		description    string
+		description     string
 	}{
 		{
-			name:           "null_byte_in_middle",
-			filename:       "test\x00.txt",
+			name:            "null_byte_in_middle",
+			filename:        "test\x00.txt",
 			shouldBeBlocked: true,
-			description:    "Null byte in middle of filename",
+			description:     "Null byte in middle of filename",
 		},
 		{
-			name:           "null_byte_at_start",
-			filename:       "\x00test.txt",
+			name:            "null_byte_at_start",
+			filename:        "\x00test.txt",
 			shouldBeBlocked: true,
-			description:    "Null byte at start of filename",
+			description:     "Null byte at start of filename",
 		},
 		{
-			name:           "null_byte_at_end",
-			filename:       "test.txt\x00",
+			name:            "null_byte_at_end",
+			filename:        "test.txt\x00",
 			shouldBeBlocked: true,
-			description:    "Null byte at end of filename",
+			description:     "Null byte at end of filename",
 		},
 		{
-			name:           "multiple_null_bytes",
-			filename:       "te\x00st\x00.txt",
+			name:            "multiple_null_bytes",
+			filename:        "te\x00st\x00.txt",
 			shouldBeBlocked: true,
-			description:    "Multiple null bytes in filename",
+			description:     "Multiple null bytes in filename",
 		},
 		{
-			name:           "null_byte_with_path_traversal",
-			filename:       "../passwd\x00.txt",
+			name:            "null_byte_with_path_traversal",
+			filename:        "../passwd\x00.txt",
 			shouldBeBlocked: true,
-			description:    "Null byte combined with path traversal",
+			description:     "Null byte combined with path traversal",
 		},
 		{
-			name:           "normal_filename",
-			filename:       "normal.txt",
+			name:            "normal_filename",
+			filename:        "normal.txt",
 			shouldBeBlocked: false,
-			description:    "Normal filename without null bytes",
+			description:     "Normal filename without null bytes",
 		},
 	}
 

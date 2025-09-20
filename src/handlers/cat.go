@@ -101,8 +101,8 @@ func handleCatError(w http.ResponseWriter, r *http.Request, err error, filename,
 		statusCode = http.StatusUnsupportedMediaType
 		errorMessage = "binary file not supported"
 	case strings.Contains(errStr, "path traversal") || strings.Contains(errStr, "invalid filename") ||
-		 strings.Contains(errStr, "null byte") || strings.Contains(errStr, "outside base directory") ||
-		 strings.Contains(errStr, "reserved name"):
+		strings.Contains(errStr, "null byte") || strings.Contains(errStr, "outside base directory") ||
+		strings.Contains(errStr, "reserved name"):
 		statusCode = http.StatusBadRequest
 		errorMessage = "invalid filename"
 	case strings.Contains(errStr, "path is a directory"):
